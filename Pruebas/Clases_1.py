@@ -45,4 +45,6 @@ flor.darClases( 'FLOR' )
 flor.realizarPregunta( 'FLOR' )
 
 ana = ComunidadEdu2('Badia')
-flor.hablar('Tengo herencia multiple y la inicialización la lleva a cabo Estudiante')
+ana.hablar('Tengo herencia multiple y la inicialización la lleva a cabo Estudiante')
+
+abdc = Humano(25)

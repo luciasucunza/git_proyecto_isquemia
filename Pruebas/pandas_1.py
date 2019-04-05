@@ -3,13 +3,11 @@ warnings.filterwarnings('ignore')
 
 # Módulos importantantes
 import pandas as pd
-import numpy as np
-
-
-import scipy.signal as sig
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import scipy.io as sio
+#import numpy as np
+#import scipy.signal as sig
+#import matplotlib as mpl
+#import matplotlib.pyplot as plt
+#import scipy.io as sio
 
 datos = {   'Nombre' : ['Franco', 'Clara', 'Javi', 'Cande', 'Maxi' ],
             'Nota'   : ['8','2','3','7','5'],
