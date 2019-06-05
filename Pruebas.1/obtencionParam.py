@@ -2,26 +2,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
+import pandas as pd
 
 #%%
 #------Apertura de la Señal-------
 mat_struct = sio.loadmat('git_proyecto_isquemia/TP4_ecg.mat')
 
-ecg_one_lead = mat_struct['ecg_lead']
-ecg_one_lead = ecg_one_lead.flatten()
-qrs_detections = mat_struct['qrs_detections']
-cant_muestras = len(ecg_one_lead)
- 
+ecg_one_lead    = mat_struct['ecg_lead']
+ecg_one_lead    = ecg_one_lead.flatten()
+qrs_detections  = mat_struct['qrs_detections']
+cant_muestras   = len(ecg_one_lead)
+fs              = 1000 #Hz
+
+time            = np.arange(0, cant_muestras, 1) /fs
+time_qrs        = qrs_detections / fs
+
 ecg_qrs_detections = np.zeros( cant_muestras ) 
 ecg_qrs_detections[qrs_detections] = ecg_one_lead[qrs_detections]
+
 #%%
 #------ Ploteo de ECG -------
 plt.figure('Señales Obtenidas')
 
-plt.plot(ecg_one_lead,     label='ECG'   )
-plt.plot(qrs_detections, ecg_one_lead[qrs_detections] ,     'ro'    )
+plt.plot(time, ecg_one_lead,     label='ECG'   )
+plt.plot(time_qrs, ecg_one_lead[qrs_detections] ,     'ro'    )
 plt.grid()
-plt.axis([-10, 100010, -12000, 32000])
 plt.legend()
 plt.show()
 
@@ -33,8 +38,13 @@ def plotParametro( tiempo, parametro ):
     plt.grid()
     plt.legend()
     plt.show()  
+    
+def plotParamDF( dataFram ):
+    dataFram.plot( x= 'Tiempo', y='Valor', grid=1)
+
+    
 #%%
-#------ Ploteo de parametro-------
+#------ Ploteo de histograma-------
 def plotHistograma( param, intervalo):
     plt.figure("Hist ograma")
     n, bins, patches = plt.hist(param, bins = intervalo, density=True )
@@ -81,15 +91,28 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
     #dx esta en ms, entonces ver si esta bien pensando o poner la fs
     
     if tipo ==          "intervaloRR":
-        zoom_region = np.array([dt-0.8, dt+0.8])
         
-        t_rectas  = np.arange( (dt-dx//2)*fs, (dt-(dx+1)//2)*fs, 1 ) /fs        #El +1 de dx esta porque si dx es impar me quedarìa un nunmero menos de vector, asì me queda de la misma longitud que fs*dx y las pares no me cambia
-        rectas       = np.zeros( dx*fs )                                      #Grafico la recta sede la mitad de los QRS hasta cada QRS
-        for i in np.arange(1, dx*fs, 1):
-            rectas  = dx
+        vent_inf_m = int((dt-0.8)*fs)
+        vent_sup_m = int((dt+0.8)*fs) 
         
-        puntos       = [ [dt-dx//2,ecg[dt-dx//2]] , [dt+dx//2,ecg[dt+dx//2]] ]   #Grafica los puntos de los dos QRS qe lo definen
-     
+        dt_m = int(dt*fs)
+        dx_m = int(dx*fs) 
+
+        t_qrs1_m = dt_m - (dx_m+1)//2     #El +1 de dx esta porque si dx es impar me quedarìa un nunmero menos de vector, asì me queda de la misma longitud que fs*dx y las pares no me cambia
+        t_qrs2_m = dt_m + (dx_m+1)//2
+
+        referencia = min( ecg[t_qrs1_m] , ecg[t_qrs2_m] )        #Solo para que la recta RR me quede a un nivel que toque los dos
+        
+        zoom_region = np.arange( vent_inf_m, vent_sup_m, 1  )
+
+        
+        t_rectas     = np.arange( t_qrs1_m, t_qrs2_m, 1 ) /fs 
+        rectas       = np.zeros( dx_m )                                      #Grafico la recta sede la mitad de los QRS hasta cada QRS
+
+        for i in np.arange(0, dx_m, 1):
+            rectas[i]  = referencia
+
+        puntos       = np.matrix([ [t_qrs1_m,referencia] , [t_qrs2_m,referencia] ])   
     
     elif tipo ==        "PendienteMax":
         zoom_region = np.array([dt-0.4, dt+0.4])
@@ -119,9 +142,9 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
         
         
     plt.figure('Señales Obtenidas')
-    plt.plot( zoom_region,  ecg[zoom_region/fs],    label='ECG'     )
+    plt.plot( zoom_region/fs,  ecg[zoom_region],    label='ECG'     )
     plt.plot( t_rectas,     rectas,                 label='Rectas'   )
-    plt.plot( puntos[:,0],   puntos[:,1],            label='Puntos'   )
+    plt.plot( puntos[:,0]/fs,   puntos[:,1],             'ro'   )
     plt.grid()
     plt.legend()
     plt.show()
@@ -144,12 +167,27 @@ def intervaloRR ( qrs ):
 
 #%%
 #------ Pruebas ------
+fs = 1000
+
 
 B = intervaloRR(qrs_detections)
+df_param =  {    'Tiempo'   : B[:,0] / fs,
+                 'Param'    : B[:,1] / fs
+                 }
+df_param = pd.DataFrame( df_param )
 
-plt.figure("Prueba")
-plotParametro(B[:,0], B[:,1])
-plt.grid()
-plt.show()
+plotParametro( B[:,0], B[:,1] )
+plotParamDF( df_param )
 
-plotHistograma( A, np.arange( 200, 1500, 10) )
+plotHistograma( B[:,1], np.arange( 300, 1400, 10) )
+
+plotParamECG( df_param.iloc[2]['Tiempo'], df_param.iloc[2]['Param'],"intervaloRR", 1000, ecg_one_lead )    
+    
+
+    
+
+dt      = df_param.iloc[2]['Tiempo']
+dx      = df_param.iloc[2]['Param']
+ecg     = ecg_one_lead
+    
+    
