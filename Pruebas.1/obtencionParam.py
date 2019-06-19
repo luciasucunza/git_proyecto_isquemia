@@ -27,20 +27,6 @@ plt.legend()
 plt.show()
 
 #%%
-#------ Ploteo de parametro-------
-def plotParametro( tiempo, parametro ):
-    plt.figure("Parametro")    
-    plt.plot(tiempo, parametro-800000, 'ro' )
-    plt.plot(time, ecg_one_lead,     label='ECG'   )
-    plt.grid()
-    plt.legend()
-    plt.show()  
-    
-def plotParamDF( dataFram ):
-    dataFram.plot( x= 'Tiempo', y='Param', grid=1)
-
-    
-#%%
 #------ Ploteo de histograma-------
 def plotHistograma( param, intervalo):
     plt.figure("Hist ograma")
@@ -107,7 +93,7 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
 
         puntos       = np.matrix([ [dt,referencia] , [dt-dx,referencia] ])           
             
-        plt.figure('Señales Obtenidas')
+        plt.figure('Intervalo RR')
         plt.cla()
         plt.plot( zoom_region/fs,   ecg[zoom_region]                                                )
         plt.plot( t_rectas,         rectas,              label=('Intervalo: '   +str(dx)+   'ms')   )
@@ -135,7 +121,7 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
         
         puntos      = ( dt, ecg[int(dt*fs)] )                                                #Grafica el punto de la pendiente maxima             
             
-        plt.figure('Señales Obtenidas')
+        plt.figure('Pendiente Máxima')
         plt.cla()
         plt.plot( zoom_region/fs,   ecg[zoom_region]                                                 )
         plt.plot( t_rectas,         rectas,                 label=('Pendiente: '   +str(dx)      )   )
@@ -182,7 +168,7 @@ def intervaloRR ( qrs ):
     return result.transpose()
 
 
-def pendienteMax ( ecg, qrs, fs ):
+def pendienteMax ( ecg, qrs ):
     """
         Obtiene los puntos de maxima pendiente a partir de la ubicación del complejo QRS con una ventana de +/-70 muestras
         Devuelve una matriz con el vector de tiempos en el que ocurre la maxima derivada y el valor de dicha derivada 
@@ -205,6 +191,30 @@ def pendienteMax ( ecg, qrs, fs ):
         i = i+1    
     
     return result
+
+
+
+def angulo ( ecg, qrs):
+    """
+        Obtiene el angulo formado por la pendiente maxima y la minima de cada complejo QRS
+        
+        angulo = arctg( (m2-m1) / (1+m1*m2) )
+        
+       Verificar:  __main__:1: RuntimeWarning: overflow encountered in short_scalars
+                   Si devuelve el angulo correcto o el suplementario 
+    """
+    
+    result  = np.zeros( (len(qrs), 2) )
+    i = 0
+    
+    for ii in qrs:
+        
+        ventDerivada    =   np.diff( ecg[ ii-70 : ii+70 ] )
+        ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])           
+        result[i,0]     =   np.argmin(ventDerivada) - np.argmax(ventDerivada) + ii
+        result[i,1]     =   np.arctan( ( ventDerivada.min()- ventDerivada.max())/(1+ ventDerivada.min()* ventDerivada.max()) )
+        i = i+1   
+    
 #%%
 #------ PRUEBA DE FUNCIONES: INTERVALO RR------
 fs = 1000
@@ -215,18 +225,13 @@ df_param =  {    'Tiempo'   : RR[:,0] / fs,
                  }
 df_param = pd.DataFrame( df_param )
 
-#plotParametro( RR[:,0], RR[:,1] )                                              #Para Probar las funciones de Ploteo 
-#plotParamDF( df_param )
-
-#plotHistograma( RR[:,1], np.arange( 300, 1400, 10) )                           #Para Probar la funcion Histograma
-
 plotParamECG( df_param.iloc[2]['Tiempo'], df_param.iloc[2]['Param'],"intervaloRR", fs, ecg_one_lead )    
 
 #%%
 #------ PRUEBA DE FUNCIONES: PENDIENTE MAXIMA------
 fs = 1000
 
-PM = pendienteMax(ecg_one_lead, qrs_detections, fs)
+PM = pendienteMax(ecg_one_lead, qrs_detections )
 df_param =  {    'Tiempo'   : PM[:,0] / fs,
                  'Param'    : PM[:,1] 
                  }
@@ -239,7 +244,7 @@ plotParamECG( df_param.iloc[2]['Tiempo'], df_param.iloc[2]['Param'],"PendienteMa
 
 
 #%%
-#------ MAS PRUEBAS------
+#------ MAS PRUEBAS PARA LAS FUNCIONES DE PLOTEO------
 dt =df_param.iloc[2]['Tiempo']
 dx =df_param.iloc[2]['Param']
 tipo= "PendienteMax"
