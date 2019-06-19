@@ -8,17 +8,13 @@ import pandas as pd
 #------Apertura de la Señal-------
 mat_struct = sio.loadmat('git_proyecto_isquemia/TP4_ecg.mat')
 
-ecg_one_lead    = mat_struct['ecg_lead']
-ecg_one_lead    = ecg_one_lead.flatten()
-qrs_detections  = mat_struct['qrs_detections']
+ecg_one_lead    = mat_struct['ecg_lead'].flatten()
+qrs_detections  = mat_struct['qrs_detections'].flatten()
 cant_muestras   = len(ecg_one_lead)
 fs              = 1000 #Hz
 
 time            = np.arange(0, cant_muestras, 1) /fs
 time_qrs        = qrs_detections / fs
-
-ecg_qrs_detections = np.zeros( cant_muestras ) 
-ecg_qrs_detections[qrs_detections] = ecg_one_lead[qrs_detections]
 
 #%%
 #------ Ploteo de ECG -------
@@ -112,6 +108,7 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
         puntos       = np.matrix([ [dt,referencia] , [dt-dx,referencia] ])           
             
         plt.figure('Señales Obtenidas')
+        plt.cla()
         plt.plot( zoom_region/fs,   ecg[zoom_region]                                                )
         plt.plot( t_rectas,         rectas,              label=('Intervalo: '   +str(dx)+   'ms')   )
         plt.plot( puntos[:,0],      puntos[:,1],    'ro',label=('Ocurrencia: '  +str(dt)+   'ms')   )
@@ -124,7 +121,7 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
     
     elif tipo ==        "PendienteMax":
         
-        vent_inf_m = int((dt-1.2)*fs)
+        vent_inf_m = int((dt-0.4)*fs)
         vent_sup_m = int((dt+0.6)*fs)
         
         zoom_region = np.arange( vent_inf_m, vent_sup_m, 1)
@@ -139,6 +136,7 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
         puntos      = ( dt, ecg[int(dt*fs)] )                                                #Grafica el punto de la pendiente maxima             
             
         plt.figure('Señales Obtenidas')
+        plt.cla()
         plt.plot( zoom_region/fs,   ecg[zoom_region]                                                 )
         plt.plot( t_rectas,         rectas,                 label=('Pendiente: '   +str(dx)      )   )
         plt.plot( puntos[0],        puntos[1],    'ro',     label=('Ocurrencia: '  +str(dt)+ 'ms')   )
@@ -173,48 +171,40 @@ def plotParamECG( dt, dx, tipo, fs, ecg):
 def intervaloRR ( qrs ):
     """
         Obtiene los intervalos RR, devolviendo una matriz con el vector de tiempos y el de intevalos
-        El tiempo es el tiempo del segundo QRS
+        El tiempo es el tiempo del segundo QRS (para el primer latido el intervalo es 0)
         (tqrs0 = 0seg, tqrs2 = 25seg        => iRR0 = 25seg, tiRR0 = 25seg )
-    """
-    matriz = np.zeros( (len(qrs), 2) )
-    for i in np.arange(1, len(qrs), 1 ):
-        matriz[i, 0] = qrs[i]
-        matriz[i, 1] = qrs[i] - qrs[i-1]
         
-    return matriz
+        Para el primer latido copia el RR del siguiente
+    """
+    len_qrs = len(qrs)
+    result = np.array([     qrs,    np.hstack([  qrs[1]-qrs[0], qrs[1:len_qrs]-qrs[0:len_qrs-1]  ])    ])
+
+    return result.transpose()
 
 
 def pendienteMax ( ecg, qrs, fs ):
     """
-        Obtiene los puntos de maxima pendiente a partir de la ubicación del complejo QRS
-        Devuelve una matriz con el vector de tiempos en el que ocurre la maxima derivada y el valor de dicha derivada        
+        Obtiene los puntos de maxima pendiente a partir de la ubicación del complejo QRS con una ventana de +/-70 muestras
+        Devuelve una matriz con el vector de tiempos en el que ocurre la maxima derivada y el valor de dicha derivada 
+        Si para una ventana el maximo se mantiene para màs de una muestra devuelve la poscion del primero
+        
+        Para la primera muestra de cada ventana se copia el valor de la siguiente derivada
+        Si bien en este caso no me afecta no tener valor porque tomo el maximo (lejos del limite inferior de la ventana)
+        si me afecta el poscionamiento temporal del máximo (sin correjir se emciemtra una muestra antes del real)
+                
     """
-    matriz      = np.zeros( (len(qrs), 2) )
-                                                                                #Otra alternativa serìa ir para atras hasta que la derivada me de negativa dos veces?
     
-    for i in np.arange( 0, len(qrs), 1):                                        #Recorro todos los complejos QRS
+    result  = np.zeros( (len(qrs), 2) )
+    i = 0
     
-        latido = int(qrs[i])                                                         #Guardo el valor de la muestra en el que ocurre el QRS
-        flag = 0
-        j = 0
+    for ii in qrs:
         
-        while flag <= 3:                                                        #Si tres veces seguidas la derivada me dio negativa claramente ya no estoy en la subida del QRS, estoy màs atras
-            df = ecg[latido-j] - ecg[latido-j-1]
-            dx = 1                                                              #Hay distancia de una muesta
-             
-            if df/dx > matriz[i,1] :                                            #Pregunto si la derivada en el punto j+i es mayor que el guardado
-                matriz[i,1] = df/dx                                             # matriz[i,1] aca se guarde el valor de la maxima pendiente para el latido "i"
-                matriz[i,0] = (latido-j)                                        # matriz[i,0] aca se guarde el tiempo de la maxima pendiente para el latido "i"
-            elif df/dx < 0:
-                flag = flag+1
-            else: 
-                flag = 0                                                                             
-        
-            j = j+1                                                             #Sigo recorriendo con J dentro del complejo QRS
-                                                                                
+        ventDerivada    =   np.diff( ecg[ ii-70 : ii+70 ] )
+        ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])           
+        result[i,:]     =   [ np.argmax(ventDerivada)+ii-70 , ventDerivada.max() ]           
+        i = i+1    
     
-    return matriz
-    
+    return result
 #%%
 #------ PRUEBA DE FUNCIONES: INTERVALO RR------
 fs = 1000
@@ -255,5 +245,6 @@ dx =df_param.iloc[2]['Param']
 tipo= "PendienteMax"
 fs = 1000
 ecg= ecg_one_lead
+qrs = qrs_detections
 
     
