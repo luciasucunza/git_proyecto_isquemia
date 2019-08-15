@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Thu Aug  8 14:32:51 2019
 
@@ -99,7 +97,7 @@ def plotParamECG( df, tipo, fs, ecg):
     if tipo ==          "intervaloRR":
         
         #Defino la ventana que se va a graficar
-        zoom_region = np.arange( int((dt-1.2)*fs), int((dt+0.6)*fs), 1  )
+        zoom_region = np.arange( (dt-1.2)*fs, (dt+0.6)*fs, 1, int  )
         
         
         referencia = min( ecg[int(dt*fs)] , ecg[int((dt-dx)*fs)] )              #Solo para que la recta RR me quede a un nivel que toque los dos
@@ -122,7 +120,7 @@ def plotParamECG( df, tipo, fs, ecg):
     
     
     elif tipo ==        "PendienteMax":
-        
+                
         #Defino la ventana que se va a graficar y la longitud de la recta        
         zoom_region = np.arange( int((dt-0.4)*fs), int((dt+0.6)*fs), 1)    
         len_rec     = 0.01
@@ -131,7 +129,8 @@ def plotParamECG( df, tipo, fs, ecg):
         t_rectas    = np.arange( dt-len_rec, dt+len_rec, 1/fs)
         rectas      = np.zeros( len(t_rectas) ) 
         for i in np.arange(0, len(t_rectas), 1):
-          rectas[i]    = dx/fs*(t_rectas[i])*fs + ( ecg[int(dt*fs)] -dt/fs*dx*fs )
+          rectas[i]    = dx/0.4/fs*(t_rectas[i])*fs + ( ecg[int(dt*fs)] -dt/fs*dx/0.4*fs )
+          #  0.4 = mv2mm/s2mm
         
         #Punto de la pendiente maxima 
         puntos      = ( dt, ecg[int(dt*fs)] )                                                            
@@ -156,17 +155,17 @@ def plotParamECG( df, tipo, fs, ecg):
         m2  = df['m2'] 
         
         #Defino la ventana que se va a graficar  
-        zoom_region = np.arange( int((dt1-0.4)*fs), int((dt2+0.4)*fs), 1)   
+        zoom_region = np.arange( (dt1-0.4)*fs, (dt2+0.4)*fs, 1, int)   
                 
         
         #Recta con valor de pendiente maxima , dibido m1 por la frecuencia para pasarlo a muestras dx/(dt*fs)
-        t_rectas1    = np.arange( dt1-0.005, dt1+0.018,  1/fs)
+        t_rectas1    = np.arange( dt1-np.around(0.005*fs)/fs, dt+np.around(0.005*fs)/fs,  1/fs)
         rectas1      = np.zeros( len(t_rectas1) ) 
         for i in np.arange(0, len(t_rectas1), 1):
           rectas1[i]    = m1/fs*(t_rectas1[i])*fs + ( ecg[int(dt1*fs)] -dt1/fs*m1*fs )
         
         #Recta con valor de pendiente minima
-        t_rectas2    = np.arange( dt2-0.018,  dt2+0.005, 1/fs)    
+        t_rectas2    = np.arange( dt-np.around(0.005*fs)/fs,  dt2+np.around(0.005*fs)/fs, 1/fs)    
         rectas2      = np.zeros( len(t_rectas2) ) 
         for i in np.arange(0, len(t_rectas2), 1):
           rectas2[i]    = m2/fs*(t_rectas2[i])*fs + ( ecg[int(dt2*fs)] -dt2/fs*m2*fs )
@@ -181,7 +180,7 @@ def plotParamECG( df, tipo, fs, ecg):
         plt.plot( t_rectas1,         rectas1,                 label=('Pendiente Positiva: '   +str(np.round(m1,4))+'('+str(np.round(dt1,4))+'s)')   )
         plt.plot( t_rectas2,         rectas2,                 label=('Pendiente Negativa: '   +str(np.round(m2,4))+'('+str(np.round(dt2,4))+'s)')   )
         plt.plot( punto1[0],        punto1[1],    'ro',       label=('Ocurrencia: '           +str(np.round(dt,4))+'s'  )   )
-        plt.plot( punto2[0],        punto2[1],    'ro',       label=('Angulo: '               +str(np.round(dx,4))+'rad')   )
+        plt.plot( punto2[0],        punto2[1],    'ro',       label=('Angulo: '               +str(np.round(dx,4))+'º')   )
         plt.xlabel('time (s)')      
         plt.ylabel('amplitude (mV)')  
         plt.grid()
@@ -220,17 +219,24 @@ def pendienteMax ( ecg, qrs, fs = 1 ):
         Si bien en este caso no me afecta no tener valor porque tomo el maximo (lejos del limite inferior de la ventana)
         si me afecta el poscionamiento temporal del máximo (sin correjir se emciemtra una muestra antes del real)
                 
+        The above expression is the general equation assuming a two-dimensional (2D) euclidean space coordinate system.
+        In this study, the units of the horizontal axis (time) and vertical axis (voltage) were rescaled to match the particular
+        case of conventional ECG tracings in clinical printouts, where a speed of 25 mm/s and a gain of 10 mm/mV are used. 
+        Equivalently, in clinical printouts 1 mm represents 40 ms in the horizontal direction and 0.1 mV in the vertical one.
+    
+        Deberìamos analizar que es mejor si 
+        
+        0.4 = mv2mm / s2mm
     """
-    qrs = qrs/fs
     
     result  = np.zeros( (len(qrs), 2) )
     i = 0
     
     for ii in qrs:
-        
-        ventDerivada    =   np.diff( ecg[ int((ii-0.07)*fs) : int((ii+0.07)*fs) ] ) 
+        zoom_region     = np.arange(  ii-np.around(0.07*fs), ii+np.around(0.07*fs), 1, int )
+        ventDerivada    =   np.diff( ecg[ zoom_region ] ) * 0.4 
         ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])     
-        result[i,:]     =   [ np.argmax(ventDerivada)/fs+ii-0.07 , ventDerivada.max() *fs ]           
+        result[i,:]     =   [ zoom_region[np.argmax(ventDerivada)]/fs, ventDerivada.max() *fs ]           
         i = i+1    
         
     return result
@@ -261,28 +267,30 @@ def angulo ( ecg, qrs, fs = 1):
         
         
         LAS DERIVADAS SE MULTIPLICAN POR FS PARA PASAR DE MUESTRAS A SEGUNDOS dx / (dt/fs)
+        
+        0.4     =  mv2mm / s2mm
+        6.25    = (s2mm / mv2mm) **2
                       
-    """
-    qrs = qrs/fs
-    
-    
+    """    
     result  = np.zeros( (len(qrs), 6) )
     i = 0
     
     for ii in qrs:
         
-        ventDerivada    =   np.diff( ecg[ int((ii-0.07)*fs) : int((ii+0.07)*fs) ] )
+        zoom_region = np.arange( ii-np.around(0.07*fs), ii+np.around(0.07*fs), 1, int)
+        
+        ventDerivada    =   np.diff( ecg[ zoom_region ] ) 
         ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])     
           
         m1 = ventDerivada.max() *fs
-        t1 = np.argmax(ventDerivada)/fs + ii-0.07
+        t1 = zoom_region[np.argmax(ventDerivada)]/fs
         b1 = ecg[int(t1*fs)] - t1* m1
         m2 = ventDerivada.min() *fs
-        t2 = np.argmin(ventDerivada)/fs + ii-0.07
+        t2 = zoom_region[np.argmin(ventDerivada)]/fs
         b2 = ecg[int(t2*fs)] - t2*m2
         
         result[i,0] = (b2-b1)     / (m1-m2) 
-        result[i,1] = np.arctan( np.abs(m2-m1) / (1+m1*m2) )
+        result[i,1] = np.arctan( np.abs(m1-m2 / (0.4*(6.25+m1*m2))) ) *180 / np.pi
         
         result[i,2] = t1
         result[i,3] = m1
@@ -301,7 +309,7 @@ df_param =  {    'Tiempo'   : RR[:,0],
                  }
 df_param = pd.DataFrame( df_param )
 
-plotParamECG( df_param.iloc[2],"intervaloRR", fs, ecg_one_lead )  
+plotParamECG( df_param.iloc[4],"intervaloRR", fs, ecg_one_lead )  
 
 #%%
 #------ PRUEBA DE FUNCIONES: PENDIENTE MAXIMA------
@@ -311,7 +319,7 @@ df_param =  {    'Tiempo'   : PM[:,0],
                  }
 df_param = pd.DataFrame( df_param )
 
-plotParamECG( df_param.iloc[6],"PendienteMax", fs, ecg_one_lead )    
+plotParamECG( df_param.iloc[4],"PendienteMax", fs, ecg_one_lead )    
 
 #%%
 #------ PRUEBA DE FUNCIONES: AGULO------
@@ -325,5 +333,5 @@ df_param =  {    'Tiempo'   : ANG[:,0],
                  }
 df_param = pd.DataFrame( df_param )
 
-plotParamECG( df_param.iloc[2],"Angulo", fs, ecg_one_lead )    
+plotParamECG( df_param.iloc[10],"Angulo", fs, ecg_one_lead )    
    
