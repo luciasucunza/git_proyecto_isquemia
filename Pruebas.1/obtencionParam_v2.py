@@ -183,6 +183,7 @@ def plotParamECG( df, tipo, fs, ecg):
         plt.plot( punto2[0],        punto2[1],    'ro',       label=('Angulo: '               +str(np.round(dx,4))+'º')   )
         plt.xlabel('time (s)')      
         plt.ylabel('amplitude (mV)')  
+#        plt.xlim(6.8,7.4)
         plt.grid()
         plt.legend()
         plt.show()  
@@ -290,7 +291,7 @@ def angulo ( ecg, qrs, fs = 1):
         b2 = ecg[int(t2*fs)] - t2*m2
         
         result[i,0] = (b2-b1)     / (m1-m2) 
-        result[i,1] = np.arctan( np.abs(m1-m2 / (0.4*(6.25+m1*m2))) ) *180 / np.pi
+        result[i,1] = np.arctan( np.abs((m1-m2) / (0.4*(6.25+m1*m2))) ) *180 / np.pi
         
         result[i,2] = t1
         result[i,3] = m1
@@ -304,34 +305,44 @@ def angulo ( ecg, qrs, fs = 1):
 #%%
 #------ PRUEBA DE FUNCIONES: INTERVALO RR------
 RR = intervaloRR(qrs_detections,fs)
-df_param =  {    'Tiempo'   : RR[:,0],
+df_param_RR =  {    'Tiempo'   : RR[:,0],
                  'Param'    : RR[:,1]
                  }
-df_param = pd.DataFrame( df_param )
+df_param_RR = pd.DataFrame( df_param_RR )
 
-plotParamECG( df_param.iloc[4],"intervaloRR", fs, ecg_one_lead )  
+plotParamECG( df_param_RR.iloc[10],"intervaloRR", fs, ecg_one_lead )  
 
 #%%
 #------ PRUEBA DE FUNCIONES: PENDIENTE MAXIMA------
 PM = pendienteMax(ecg_one_lead, qrs_detections,fs )
-df_param =  {    'Tiempo'   : PM[:,0],
+df_param_PM =  {    'Tiempo'   : PM[:,0],
                  'Param'    : PM[:,1] 
                  }
-df_param = pd.DataFrame( df_param )
+df_param_PM = pd.DataFrame( df_param_PM )
 
-plotParamECG( df_param.iloc[4],"PendienteMax", fs, ecg_one_lead )    
+plotParamECG( df_param_PM.iloc[10],"PendienteMax", fs, ecg_one_lead )    
 
 #%%
 #------ PRUEBA DE FUNCIONES: AGULO------
 ANG = angulo(ecg_one_lead, qrs_detections, fs )
-df_param =  {    'Tiempo'   : ANG[:,0],
+df_param_PM =  {    'Tiempo'   : ANG[:,0],
                  'Param'    : ANG[:,1], 
                  't_m1'     : ANG[:,2], 
                  'm1'       : ANG[:,3], 
                  't_m2'     : ANG[:,4], 
                  'm2'       : ANG[:,5]
                  }
-df_param = pd.DataFrame( df_param )
+df_param_PM = pd.DataFrame( df_param_PM )
 
-plotParamECG( df_param.iloc[10],"Angulo", fs, ecg_one_lead )    
-   
+plotParamECG( df_param_PM.iloc[10],"Angulo", fs, ecg_one_lead )    
+#%%
+#----- PRUEBA DE GRAFICA DE MÀS DE UNA SERIE
+ 
+plt.figure(1)
+plt.subplot(211)
+plt.plot(df_param_RR['Tiempo'], df_param_RR['Param'])
+plt.grid()
+plt.subplot(212)
+plt.plot(df_param_PM['Tiempo'], df_param_PM['Param'])
+plt.grid()
+plt.show()

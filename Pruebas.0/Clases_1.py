@@ -1,7 +1,9 @@
 #   CLASE BASE
 class Humano:
-    def __init__(self, edad):
+    def __init__(self, edad, nombre ,apellido):
         self.edad = edad
+        self.nombre= nombre
+        self.apellido = apellido
         print('Soy Humano, de ',edad, 'años')
         
     def hablar(self, mensaje):
