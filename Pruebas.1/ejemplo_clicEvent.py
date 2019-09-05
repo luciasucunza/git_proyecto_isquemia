@@ -1,32 +1,58 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 29 15:57:28 2019
+import matplotlib.pyplot as plt
+import numpy as np
+import wfdb
 
-@author: luciasucunza
-"""
+def pick_custom_hit():
+    def line_picker(line, mouseevent):
+        """
+        find the points within a certain distance from the mouseclick in
+        data coords and attach some extra attributes, pickx and picky
+        which are the data points that were picked
+        """
+        if mouseevent.xdata is None:
+            return False, dict()
+        xdata = line.get_xdata()
+        ydata = line.get_ydata()
+        maxd = 0.05
+        d = np.sqrt(
+            (xdata - mouseevent.xdata)**2 + (ydata - mouseevent.ydata)**2)
 
-from matplotlib import pyplot as plt
+        d = np.sqrt( (xdata - mouseevent.xdata)**2 )
 
-class LineBuilder:
-    def __init__(self, line):
-        self.line = line
-        self.xs = list(line.get_xdata())
-        self.ys = list(line.get_ydata())
-        self.cid = line.figure.canvas.mpl_connect('button_press_event', self)
 
-    def __call__(self, event):
-        print('click', event)
-        if event.inaxes!=self.line.axes: return
-        self.xs.append(event.xdata)
-        self.ys.append(event.ydata)
-        self.line.set_data(self.xs, self.ys)
-        self.line.figure.canvas.draw()
+        ind, = np.nonzero(d <= maxd)
+        if len(ind):
+            pickx = xdata[ind]
+            picky = ydata[ind]
+            props = dict(ind=ind, pickx=pickx, picky=picky)
+            return True, props
+        else:
+            return False, dict()
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-ax.set_title('click to build line segments')
-line, = ax.plot([0], [0])  # empty line
-#linebuilder = LineBuilder(line)
+    def onpick2(event):
+        print('onpick2 line:', event.pickx, event.picky)
 
-plt.show()
+    fig, ax = plt.subplots()
+    ax.set_title('custom picker for line data')
+    line, = ax.plot(time[0:1000], ecg_one_lead[0:1000],'o', picker=line_picker)
+    fig.canvas.mpl_connect('pick_event', onpick2)
+    
+    
+if __name__ == '__main__':
+    pick_custom_hit()
+    plt.show()
+    
+    
+#%%
+#------Apertura de la Señal y Anotaciones-------
+cant_muestras = 60000                                   #cantidad de muestras
+
+signal, fields  = wfdb.io.rdsamp( '105', pb_dir='mitdb',     sampto = cant_muestras                     )
+ann             = wfdb.rdann(     '105', pb_dir='mitdb',     sampto = cant_muestras, extension = 'atr'   )
+
+ecg_one_lead  = signal[:,0]
+qrs_detections =   ann.sample
+fs = fields['fs']
+
+time            = np.arange(0, cant_muestras, 1) /fs
+time_qrs        = qrs_detections / fs
