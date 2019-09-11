@@ -1,11 +1,9 @@
 import pandas as pd
 import wfdb
-import matplotlib.pyplot as plt
 import numpy as np
-
 #%%
 class ECGClass:
-    def __init__(self, num_ECG, dataBase='MIT', ti=0, tf=200000  ):
+    def __init__(self, num_ECG, dataBase='MIT', ti=0, tf=20000  ):
         
         self.__dataBase__ = dataBase
         
@@ -28,8 +26,6 @@ class ECGClass:
     def intervalRR (self):
         len_qrs = len(self.qrs)
         qrs = self.qrs/self.fs
-#        result = np.array([     qrs,    np.hstack([  qrs[1]-qrs[0], qrs[1:len_qrs]-qrs[0:len_qrs-1]  ])    ])
-#        return result.transpose()
         return np.hstack([  qrs[1]-qrs[0], qrs[1:len_qrs]-qrs[0:len_qrs-1]  ])
 
 # Este lo voy a dejar igual porque el tiempo de ocurrencia si me sirve para despues poder graficar fachero
@@ -41,7 +37,7 @@ class ECGClass:
 
         for ii in self.qrs:
             zoom_region     = np.arange(  ii-np.around(0.07*fs), ii+np.around(0.07*fs), 1, int )
-            ventDerivada    =   np.diff( self.ecg[ zoom_region ] ) * 0.4
+            ventDerivada    =   np.diff( self.signal[ zoom_region ] ) * 0.4
             ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])
             result[i,:]     =   [ zoom_region[np.argmax(ventDerivada)]/fs, ventDerivada.max() *fs ]
             i = i+1
@@ -54,17 +50,17 @@ class ECGClass:
         i = 0
         for ii in self.qrs:
 
-            zoom_region = np.arange( ii-np.around(0.07*self.fsfs), ii+np.around(0.07*self.fsfs), 1, int)
+            zoom_region = np.arange( ii-np.around(0.07*self.fs), ii+np.around(0.07*self.fs), 1, int)
 
-            ventDerivada    =   np.diff( self.ecg[ zoom_region ] )
+            ventDerivada    =   np.diff( self.signal[ zoom_region ] )
             ventDerivada    =   np.hstack([ ventDerivada[0], ventDerivada ])
 
             m1 = ventDerivada.max() *self.fs
             t1 = zoom_region[np.argmax(ventDerivada)]/self.fs
-            b1 = self.ecg[int(t1*self.fsfs)] - t1* m1
+            b1 = self.signal[int(t1*self.fs)] - t1* m1
             m2 = ventDerivada.min() *self.fs
             t2 = zoom_region[np.argmin(ventDerivada)]/self.fs
-            b2 = self.ecg[int(t2*self.fs)] - t2*m2
+            b2 = self.signal[int(t2*self.fs)] - t2*m2
 
             result[i,0] = (b2-b1)     / (m1-m2)
             result[i,1] = np.arctan( np.abs((m1-m2) / (0.4*(6.25+m1*m2))) ) *180 / np.pi
@@ -80,11 +76,10 @@ class ECGClass:
 
 #%%
 
-ECG = ECGClass('101')
+ECG = ECGClass('105')
 
-RR = ECG.intervalRR()
+RR  = ECG.intervalRR()
+ANG = ECG.angle()
+SM  = ECG.slopeMax()
 
-
-plotParamECG( df_param_RR.iloc[10],"intervaloRR", ECG.fs(), ECG.ecg() )
-
-
+#plotParamECG( df_param_RR.iloc[10],"intervaloRR", ECG.fs(), ECG.ecg() )

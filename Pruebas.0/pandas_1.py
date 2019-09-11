@@ -10,7 +10,7 @@ import pandas as pd
 #import scipy.io as sio
 
 datos = {   'Nombre' : ['Franco', 'Clara', 'Javi', 'Cande', 'Maxi' ],
-            'Nota'   : ['8','2','3','7','5'],
+            'Nota'   : [8,2,3,7,5],
             'Materia': ['EA','SyH','SdC','TD','TC'],
             'Deporte': ['Teni','Futb','Vole','Hand','Basq'],
             'Edad'   : ['92','58','32','12','35']
