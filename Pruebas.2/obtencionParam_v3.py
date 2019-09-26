@@ -21,25 +21,7 @@ time_qrs        = qrs_detections / fs
 #%%
 
 def plotParamECG( df, tipo, fs, ecg):
-    """
-        Plotea un valor del parametro en el ECG, dependiendo de la naturaleza del mismo se realizan ciertas graficas adicionales
-        Esta funcion formarìa parte de la clase pero solo la podrìa usar el padre? Porque solo la usa la primera instancia creada
-        Al llamarla desde un objeto podrìa conocer:     - El "link" del ECG de donde viene (y la frecuencia de sampleo )
-                                                        - El tipo de parametro del que viene
-        Solo conciendo el indice se le podrìa pasar el valor del parametro y del tiempo, ya que serìa entrar en las columnas del data frame con eso
-        En la clase que definimos, en el data frame cada valor tiene asociado un tiempo
-        
-        Parameters
-        ----------
-        dt :    int
-            Tiempo en el que ocurre el parametro
-        dx:     float
-            Valor del parametro
-        tipo:   str
-            Nombre del tipo de parametro ("intervaloRR, "angulo", "pendienteMax")
-        Notes
-        -----
-    """   
+  
     dt = df['Tiempo']
     dx = df['Param']
     if tipo ==          "intervaloRR":

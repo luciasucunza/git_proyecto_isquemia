@@ -5,15 +5,48 @@ import pandas as pd
 ##
 """
             ALGUNA FORMA DE PONER POR EJEMPLO UNITIS["ANGLE"] Y ME DEVUELVA "º", ASÍ CON LAS 3
+            
+            
+            En todas las gráficas se pueden hacer mejoras, para mostrar más datos
 """
 ##
+def buscar( A, Cx, Xi, Ci):
+    """
+    ¡¡¡¡¡¡¡¡¡¡¡¡¡¡POSIBLEMENTE ESTO YA EXISTA!!!!!!!!!!!!!!
+    
+    El valor de la matriz "A" que esta en la columna "Cx" y la fila que corresponda al valor "Xi" de la columna "Ci"
+    """
+    j = 0
+    for i in A[:,Ci]:
+        if i == Xi:
+            return A[j,Cx]
+        else:
+            j = j+1
+def devolverVector( A, Cx, Xi, Xd, Ci):
+    """
+    ¡¡¡¡¡¡¡¡¡¡¡¡¡¡POSIBLEMENTE ESTO YA EXISTA!!!!!!!!!!!!!!
+    
+    Devuleve un vector de la columna "Cx" de la matriz "A" que vaya de la fila que corresponda al valor Xi de la columna "Ci" hasta la fila que corresponda al valor Xf de la columna "Ci" 
+    """
+    j = 0
+    for i in A[:,Ci]:
+        if i == Xi:
+            break
+        else:
+            j = j+1
+    
+    for i in A[:,Ci]:
+        aux = 
+        if i == Xf:
+            break
+        else:
+            j = j+1
+    
+
 def picker_handler( line, mouseevent):
     """
-    Tendrìa que ver dos cosas:
-            - Ahora si toca dos puntos agarra el primero arbitrariamente
-            - El valor de maxd es funcion de dt que es igual en todos los parametros que grafico ahora, pero habrìa que ver si esto sigue bien para otras cosazs
-                podrìa querer expresarlo en funcion de FS por lo que la deberìa definir adentro
-                pero 1/fs es muy chico porque lo que me importa es la distancia entre latidos que esl algo pseudo constante
+    Tendrìa que ver dos cosas:          - Ahora si toca dos puntos agarra el primero arbitrariamente (MENU)
+                                        - El valor de maxd es funcion de dt que es igual en todos los parametros que grafico ahora, PUEDE QUE EN ALGUN MOMENTO JODA 
     """
 
     if mouseevent.xdata is None:        
@@ -39,19 +72,25 @@ def picker_handler( line, mouseevent):
     
 class timeSerie:
     """
-    TYPE PARAM TIENE QUE SER O "Angle" "SlopeMax" "IntervalRR"
+    TYPE PARAM TIENE QUE SER O "Angle" "SlopeMax" "IntervalRR",  "Filt" "Resampled" "Median"
     Para el angulo primero se pasa la màxima y despues la minima
+    
+    Tendría que ver la mejor forma de tratar el None o chequear que las cosas sean strings o ese tipo de cosas
     """
-    def __init__(self, typeParam = None, fs = None, sig_origin= None, param = None, 
-                 t_param = None, param_aux1 = None, t_param_aux1 = None  , param_aux2 = None, 
-                 t_param_aux2 = None  
+    def __init__(self,  typeParam   = None, 
+                        origin      = None,           
+                        param       = None,      t_param = None, 
+                        param_aux1  = None,      t_param_aux1 = None, 
+                        param_aux2  = None,      t_param_aux2 = None  
                  ):
         
 #        if typeParam is None: 
-        self.__origin__  = sig_origin
-        self.dataFrame   = pd.DataFrame({   'Time'      : t_param,
+        self.type       = typeParam
+        self.__origin__ = origin
+        self.dataFrame  = pd.DataFrame({   'Time'      : t_param,
                                              typeParam  : param
                                              })
+    
         if typeParam == 'Angle':
             self.units                      = "º"
             self.dataFrame['SlopeMax']      = param_aux1
@@ -66,27 +105,54 @@ class timeSerie:
             self.dataFrame['TimeSlopeMax']  = t_param_aux1  
             self.units    = "mm/mm"
           
-        self.fs     = fs
-        self.type   = typeParam
         
     """
-    Graficar una serie con datos alrededor 
+    Grafica la serie
     """
-    def plotSerieECG( self ): 
+    def plotSerie(self):
         fig = plt.figure( 'TimeSerie: ' + self.type + ' plot')
         plt.cla()
-        
-        ax1 = plt.subplot(211)
-        plt.plot( self.__origin__.time,  self.__origin__.signal)
-        plt.setp(ax1.get_xticklabels(), fontsize=6)
-        plt.grid()
-        
-        ax2 = plt.subplot(212, sharex=ax1)
         plt.plot( self.dataFrame['Time'],  self.dataFrame[ self.type ], 'go', picker=picker_handler)
-        plt.setp(ax2.get_xticklabels(), visible=False)
         fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
         plt.grid()
         
+    """
+    Grafica la serie y la serie que le dio origen
+    """
+    def plotSerieVsOrig( self ): 
+        if isinstance(self.__origin__, np.ndarray):
+            fig = plt.figure( 'TimeSerie: ' + self.type + ' vs Origin')
+            plt.cla()
+            
+            ax1 = plt.subplot(211)
+            plt.plot( self.__origin__[:,0],  self.__origin__[:,1])
+            plt.setp(ax1.get_xticklabels(), fontsize=6)
+            plt.grid()
+            
+            ax2 = plt.subplot(212, sharex=ax1)
+            plt.plot( self.dataFrame['Time'],  self.dataFrame[ self.type ], 'go', picker=picker_handler)
+            plt.setp(ax2.get_xticklabels(), fontsize=6)
+            fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
+            plt.grid()
+            
+        elif isinstance(self.__origin__, timeSerie): 
+            fig = plt.figure( 'TimeSerie: ' + self.type + ' vs Origin')
+            plt.cla()
+            
+            ax1 = plt.subplot(211)
+            plt.plot( self.__origin__.dataFrame['Time'],  self.__origin__.dataFrame[self.__origin__.type] )
+            plt.setp(ax1.get_xticklabels(), fontsize=6)
+            plt.grid()
+            
+            ax2 = plt.subplot(212, sharex=ax1)
+            plt.plot( self.dataFrame['Time'],  self.dataFrame[ self.type ], 'go', picker=picker_handler)
+            plt.setp(ax2.get_xticklabels(), fontsize=6)
+            fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
+            plt.grid()
+                      
+        else:
+            print('Origen no conocido')
+            self.plotSerie()
      
     def __plotInspection__(self,event):
         """
@@ -94,30 +160,31 @@ class timeSerie:
         Podria ponerle los  "__" para marcar que solo se llama desde otra si me tocan un clic
         """ 
         if   self.type == 'IntervalRR':
-             self.__plotItemRR__( event.pickx, event.picky )
+             self.__plotItemRR__( self.__origin__, event.pickx, event.picky )
             
         elif self.type == 'SlopeMax':
-             self.__plotItemSlope__( event.pickx, event.picky )
+             self.__plotItemSlope__( self.__origin__, event.pickx, event.picky )
             
         elif self.type == 'Angle':
-             self.__plotItemAngle__( event.pickx, event.picky )
+             self.__plotItemAngle__( self.__origin__, event.pickx, event.picky )
 
        
-    def __plotItemRR__ (self, dt, dy):
+    def __plotItemRR__ (self,originECG, dt, dy):
         """
         Esto debería ver que es mejor si poner el funciones aca adentro o por fuera
         """
-        zoom_region = np.arange( (dt-1.2)*self.fs, (dt+0.6)*self.fs, 1, int  )
-        
-        referencia = min( self.__origin__.signal[int(dt*self.fs)] , self.__origin__.signal[int((dt-dy)*self.fs)] )              #Solo para que la recta RR me quede a un nivel que toque los dos
-        t_rectas     = np.arange( dt-dy, dt, 1/self.fs ) 
-        rectas       = np.full( len(t_rectas), referencia )                                 
-        puntos       = np.matrix([ [dt,referencia] , [dt-dy,referencia] ])           
+        fs = 360
+        zoom_region = np.arange( (dt-1.2)*fs, (dt+0.6)*fs, 1, int  )
+            
+        referencia  = min( buscar(originECG, 1, dt, 0),  buscar(originECG, 1, dt-dy, 0) )
+        t_rectas    = np.arange( dt-dy, dt, dy/2 ) 
+        rectas      = np.full( 3, referencia )                                 
+        puntos      = np.matrix([ [dt,referencia] , [dt-dy,referencia] ])           
                 
         #Ploteo
         plt.figure('Inspection: Intervalo RR')
         plt.cla()
-        plt.plot( zoom_region/self.fs,  self.__origin__.signal[zoom_region]                                                )
+        plt.plot( zoom_region/fs,  originECG[zoom_region,1]                                                )
         plt.plot( t_rectas,             rectas,                  label=('Intervalo: '   +str(np.round(dy,4))+   's')   )
         plt.plot( puntos[:,0],          puntos[:,1],      'ro'  ,label=('Ocurrencia: '  +str(np.round(dt,4))+   's')   )
         plt.xlabel('time (s)')  
@@ -217,7 +284,7 @@ class timeSerie:
         plt.grid()
         plt.legend()
         plt.show()                               
-        
+
 #%%
 """
      FUNCIONES A DESARROLLAR    
@@ -227,8 +294,12 @@ class timeSerie:
 #    Deberìa ser capaz de graficar la combinaciòn de dos series que le pasen
 #    (?) serìa mejor qe directamente se llame AnguloVSRR, etc 
 #    """
+#            
+#    def resampling:
+#        """
+#        Resamplea la serie de datos a otra frecuencia pasada como parametro, generando otra instancia de la clase donde __origin__ va a ser la serie que le dio origen
+#        """
 #    
-    
 #    def filter_1():
 #    """
 #    Pueden haber màs de estas funciones que permitan realizar disitnots filtrados:
