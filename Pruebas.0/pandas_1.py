@@ -9,12 +9,13 @@ import pandas as pd
 #import matplotlib.pyplot as plt
 #import scipy.io as sio
 
-datos = {   'Nombre' : ['Franco', 'Clara', 'Javi', 'Cande', 'Maxi' ],
-            'Nota'   : [8,2,3,7,5],
-            'Materia': ['EA','SyH','SdC','TD','TC'],
-            'Deporte': ['Teni','Futb','Vole','Hand','Basq'],
-            'Edad'   : ['92','58','32','12','35']
+datos = {   'Nombre' : ['Franco', 'Clara', 'Javi', 'Cande', 'Maxi', 'Agus','Benito','Carlos','Leandro','Maria' ],
+            'Nota'   : [8,2,3,7,5, 11 , 4, 2, 10, 5],
+            'Materia': ['EA','SyH','SdC','TD','TC2', 'EA2','SyH2','SdC2','TD2','TC2'],
+            'Deporte': ['Teni','Futb','Vole','Hand','Basq','Wate','Nata','Hock','Atle','Jaba'],
+            'Edad'   : ['92','58','32','12','35','23','18','43','52','31']
          }
+df_datos = pd.DataFrame(datos)
 index = [ 2, 10, 6, 4, 8]
 df_datos = pd.DataFrame(datos, index)                 #Creo el data frame
 print('\n')

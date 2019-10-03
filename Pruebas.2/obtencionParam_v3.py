@@ -88,7 +88,7 @@ def plotParamECG( df, tipo, fs, ecg):
         zoom_region = np.arange( (dt1-0.4)*fs, (dt2+0.4)*fs, 1, int)   
                 
         
-        #Recta con valor de pendiente maxima , dibido m1 por la frecuencia para pasarlo a muestras dx/(dt*fs)
+        #Recta con valor de pendiente maxima , divido m1 por la frecuencia para pasarlo a muestras dx/(dt*fs)
         t_rectas1    = np.arange( dt1-np.around(0.005*fs)/fs, dt+np.around(0.005*fs)/fs,  1/fs)
         rectas1      = np.zeros( len(t_rectas1) ) 
         for i in np.arange(0, len(t_rectas1), 1):
