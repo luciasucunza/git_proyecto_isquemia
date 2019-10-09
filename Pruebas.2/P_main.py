@@ -12,26 +12,24 @@ SM  = ECG.slopeMax()
 
 #%%     PRUEBA TIME SERIE
 
-matrixECG = np.column_stack((ECG.time, ECG.signal))
+matrixECG = np.column_stack((ECG.time, ECG.signal)) 
 
 #------------
 pruebaRR = timeSerie('IntervalRR', matrixECG, RR, ECG.qrs/ECG.fs)
+pruebaRR.recorteX(0,20)
+pruebaRR.recorteY(0.6,0.9)
 pruebaRR.plotSerie()
 
 #------------
 pruebaSM = timeSerie('SlopeMax', matrixECG, SM[:,1], SM[:,0]  )
 pruebaSM.plotSerie()
 
-rectYpruebSM = pruebaSM.recorteY(25,30)
-rectYpruebSM.plotSerie()
+pruebaSM.recorteY(25,30)
+pruebaSM.plotSerie()
 
 #------------
 pruebaANG = timeSerie('Angle', matrixECG, ANG[:,1], ANG[:,0],  ANG[:,3], ANG[:,2], ANG[:,5], ANG[:,4] )
+
+pruebaANG.recorteX(0,20)
+pruebaANG.recorteY(4,60)
 pruebaANG.plotSerie()
-
-rectXpruebANG = pruebaANG.recorteX(0,20)
-rectXpruebANG.plotSerie()
-rectYpruebANG = rectXpruebANG.recorteY(4,5)
-rectYpruebANG.plotSerie()
-
-

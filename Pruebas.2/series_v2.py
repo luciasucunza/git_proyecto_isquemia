@@ -46,7 +46,8 @@ class timeSerie:
                         param       = None,      t_param = None, 
                         param_aux1  = None,      t_param_aux1 = None, 
                         param_aux2  = None,      t_param_aux2 = None,
-                        abstraLevel = 1
+                        abstraLevel = 1,
+                        origIndex   = None
                  ):
         
 #        if typeParam is None: 
@@ -82,6 +83,8 @@ class timeSerie:
         plt.cla()
         plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go', picker=picker_handler)
         fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
+        plt.xlabel('time (s)')   
+        plt.ylabel(self.units)
         plt.grid()
         
 
@@ -99,6 +102,7 @@ class timeSerie:
             plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go', picker=picker_handler)
             plt.setp(ax2.get_xticklabels(), fontsize=6)
             fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
+            
             plt.grid()
             
         elif isinstance(self.__origin__, timeSerie): 
@@ -127,7 +131,7 @@ class timeSerie:
         Podria ponerle los  "__" para marcar que solo se llama desde otra si me tocan un clic
         """ 
         if self.__level__ == 1:
-            if   self.type == 'IntervalRR':
+            if   self.type == 'IntervalRR':  
                  self.__plotItemRR__( self.__origin__, event.pickx, event.picky )
                 
             elif self.type == 'SlopeMax':
@@ -193,14 +197,16 @@ class timeSerie:
         
     def __plotItemAngle__ (self, originECG, dt, dy ):
     
-#        i = DE ALGUNA FORMA ENCONTRAR EL i CON DT QUE NO SE REPITE NUNCA
+#        i = DE ALGUNA FORMA ENCONTRAR EL i CON DT QUE NO SE REPITE NUNCA, ver alguna forma mejor
+#        Ojo que filas no es lo mismo que indice
         i = self.dataF[self.dataF['Time']==dt].index
         i = i[0]
-        
-        dt1 = self.dataF.iloc[i]['TimeSlopeMax']
-        dt2 = self.dataF.iloc[i]['TimeSlopeMin']
-        m1  = self.dataF.iloc[i]['SlopeMax']
-        m2  = self.dataF.iloc[i]['SlopeMin'] 
+        aux = self.dataF.loc[i]
+        dt1 = aux[:]['TimeSlopeMax']
+        dt2 = aux[:]['TimeSlopeMin']
+        m1  = aux[:]['SlopeMax']
+        m2  = aux[:]['SlopeMin'] 
+
 
         #Puntos de pendiente maxima 
         punto1      = ( dt1, originECG[ originECG[:,0] == dt1, 1 ] )    
@@ -256,25 +262,56 @@ class timeSerie:
         if lInf == lSup:
             print('Los limites deben ser diferentes')
         else:
-            recX = timeSerie(   typeParam   = self.type, 
-                                origin      = self,           
-                                param       = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ],
-                                abstraLevel = self.__level__  +1
-                                )
-            return recX
+            self.dataF = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ]
+            
+#            recX = timeSerie(   typeParam   = self.type, 
+#                                origin      = self,           
+#                                param       = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ],
+#                                abstraLevel = self.__level__  +1
+#                                )
+#            return recX
         
     def recorteY(self, lInf, lSup):
         if lInf == lSup:
             print('Los limites deben ser diferentes')
         else:
-            recY = timeSerie(   typeParam   = self.type, 
-                                origin      = self,           
-                                param       = self.dataF.loc[ (self.dataF[self.type]>lInf) & (self.dataF[self.type]<lSup) ],
-                                abstraLevel = self.__level__  +1
-                                )
-            return recY
+            self.dataF = self.dataF.loc[ (self.dataF[self.type]>lInf) & (self.dataF[self.type]<lSup) ]
+#            recY = timeSerie(   typeParam   = self.type, 
+#                                origin      = self,           
+#                                param       = self.dataF.loc[ (self.dataF[self.type]>lInf) & (self.dataF[self.type]<lSup) ],
+#                                abstraLevel = self.__level__  +1
+#                                )
+#            return recY
         
-                               
+
+        
+        
+    def roi_time(self, labels, tInf = None, tSup = None):
+        
+        #Podrìa no ser por grafico sino enviando limite superior e inferior y enombre de label
+        if tInf == None:   
+            
+            i = 2*len(labels) + 1
+            
+            plt.figure( 'TimeSerie: ' + self.type + ' plot' + ' (' + str(self.__level__) + ')')
+            plt.cla()
+            plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go')
+            plt.xlabel('time (s)')   
+            plt.ylabel(self.units)
+            plt.grid()
+            
+            x = plt.ginput(i, timeout = 0)
+                                
+            plt.close()
+            print (x)
+            
+                
+    
+
+
+        
+
+        
 
 #%%
 """
