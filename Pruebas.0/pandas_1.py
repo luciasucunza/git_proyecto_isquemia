@@ -16,7 +16,7 @@ datos = {   'Nombre' : ['Franco', 'Clara', 'Javi', 'Cande', 'Maxi', 'Agus','Beni
             'Edad'   : ['92','58','32','12','35','23','18','43','52','31']
          }
 df_datos = pd.DataFrame(datos)
-index = [ 2, 10, 6, 4, 8]
+index = [ 2, 10, 6, 4, 8, 12, 0, 16, 14, 20]
 df_datos = pd.DataFrame(datos, index)                 #Creo el data frame
 print('\n')
 print(datos)

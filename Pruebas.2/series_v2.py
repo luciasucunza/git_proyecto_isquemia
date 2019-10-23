@@ -78,10 +78,16 @@ class timeSerie:
                 self.dataF['TimeSlopeMax']  = t_param_aux1  
                 
 
-    def plotSerie(self):
+    def plotSerie(self, interes = None ):
         fig = plt.figure( 'TimeSerie: ' + self.type + ' plot' + ' (' + str(self.__level__) + ')')
         plt.cla()
         plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go', picker=picker_handler)
+        
+        if interes != None:               
+            for i in interes:
+#                plt.plot( self.dataF.loc[ self.dataF['Time']==i ][ 'Time' ],  self.dataF.loc[ self.dataF['Time']==i ][ self.type ], 'ro' )
+                plt.plot( self.dataF.iloc[i]['Time'],  self.dataF.iloc[i][self.type], 'ro' )
+        
         fig.canvas.mpl_connect('pick_event',  self.__plotInspection__)
         plt.xlabel('time (s)')   
         plt.ylabel(self.units)
@@ -140,7 +146,7 @@ class timeSerie:
             elif self.type == 'Angle':
                  self.__plotItemAngle__( self.__origin__, event.pickx, event.picky )
         else:
-            self.__origin__.plotSerie()
+            self.__origin__.plotSerie( interes = self.dataF.loc[ self.dataF['Time']==event.pickx ][ 'iOrigin' ] )
 
        
     
@@ -258,61 +264,63 @@ class timeSerie:
         plt.legend()
         plt.show()
 
+
     def recorteX(self, lInf, lSup):
         if lInf == lSup:
             print('Los limites deben ser diferentes')
         else:
             self.dataF = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ]
             
-#            recX = timeSerie(   typeParam   = self.type, 
-#                                origin      = self,           
-#                                param       = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ],
-#                                abstraLevel = self.__level__  +1
-#                                )
-#            return recX
         
     def recorteY(self, lInf, lSup):
         if lInf == lSup:
             print('Los limites deben ser diferentes')
         else:
             self.dataF = self.dataF.loc[ (self.dataF[self.type]>lInf) & (self.dataF[self.type]<lSup) ]
-#            recY = timeSerie(   typeParam   = self.type, 
-#                                origin      = self,           
-#                                param       = self.dataF.loc[ (self.dataF[self.type]>lInf) & (self.dataF[self.type]<lSup) ],
-#                                abstraLevel = self.__level__  +1
-#                                )
-#            return recY
-        
+
+
+    def recorteRoI(self, label):       
+            self.dataF = self.dataF.loc[ self.dataF['RoI'] == label ]    
+#            recX = timeSerie(   typeParam   = self.type, 
+#                    origin      = self,           
+#                    param       = self.dataF.loc[ self.dataF['RoI'] == label ],
+#                    abstraLevel = self.__level__  +1
+#                    )
+#            recX.dataF['iOrigin'] = self.dataF['Time']
+#            return recX
+#            
 
         
+    def roi_time(self, label, tInf = None, tSup = None):
         
-    def roi_time(self, labels, tInf = None, tSup = None):
-        
-        #Podrìa no ser por grafico sino enviando limite superior e inferior y enombre de label
-        if tInf == None:   
-            
-            i = 2*len(labels) + 1
-            
-            plt.figure( 'TimeSerie: ' + self.type + ' plot' + ' (' + str(self.__level__) + ')')
-            plt.cla()
-            plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go')
-            plt.xlabel('time (s)')   
-            plt.ylabel(self.units)
-            plt.grid()
-            
-            x = plt.ginput(i, timeout = 0)
-                                
-            plt.close()
-            print (x)
-            
+        #Si no pasan tiempos limites entonces es por metodo gráfico la elección
+        #Estaría bueno que en lugar de poner el nombre desde la funcion salte una pestañita despues de tocar dos puntos
+        if tInf == None:
+            if tSup == None:                 
                 
-    
-
-
-        
-
-        
-
+                i = 2*len(label) + 1
+                
+                plt.figure( 'TimeSerie: ' + self.type + ' plot' + ' (' + str(self.__level__) + ')')
+                plt.cla()
+                plt.plot( self.dataF['Time'],  self.dataF[ self.type ], 'go')
+                plt.xlabel('time (s)')   
+                plt.ylabel(self.units)
+                plt.grid()
+                
+                x = plt.ginput(i, timeout = 0)
+                                    
+                plt.close()
+                print (x)
+                
+            else:
+                self.dataF.loc[self.dataF['Time'] < tSup, 'RoI']  = label
+        else:
+            if tSup == None:
+                self.dataF.loc[self.dataF['Time'] > tInf, 'RoI']  = label
+            else:                
+#                self.dataF.loc[ (self.dataF['Time'] > 2) & (self.dataF['Time'] < 7), 'RoI' ]  = 'das'
+                self.dataF.loc[ (self.dataF['Time'] > tInf) & (self.dataF['Time'] < tSup), 'RoI' ]  = label
+                
 #%%
 """
      FUNCIONES A DESARROLLAR    
@@ -335,4 +343,18 @@ class timeSerie:
 #    """    
 #        
 #    
-#    
+#    def showRoI(self):
+#    """
+#        Que muestre cuales son las roi qe hay en el momento
+#    """
+
+# De esta forma al recortar genero otra instancia
+
+#            SI QUISIERA HACER UNA NUEVA INSTANCIA Y NO PISAR
+#            recX = timeSerie(   typeParam   = self.type, 
+#                                origin      = self,           
+#                                param       = self.dataF.loc[ (self.dataF['Time']>lInf) & (self.dataF['Time']<lSup) ],
+#                                abstraLevel = self.__level__  +1
+#                                )
+#            return recX
+            
